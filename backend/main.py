@@ -3,12 +3,20 @@ from fastapi import FastAPI
 from fastapi_mqtt import FastMQTT, MQTTConfig
 from deta import Deta  # Import Deta
 
+
+deta = Deta()
 db = deta.Base("simple_db")
 
 
 app = FastAPI()
 
-mqtt_config = MQTTConfig()
+mqtt_config = MQTTConfig(
+    host="broker.hivemq.com",
+    port=1883,
+    keepalive=60,
+    username=None,
+    password=None,
+)
 
 mqtt = FastMQTT(config=mqtt_config)
 mqtt.init_app(app)
@@ -26,7 +34,7 @@ async def message(client, topic, payload, qos, properties):
     print(topic)
     print(qos)
     print(properties)
-    await db.put({"topic": topic, "payload": payload.decode("utf-8")})
+    db.put({"topic": topic, "payload": payload.decode("utf-8")})
 
 
 @app.get("/")
