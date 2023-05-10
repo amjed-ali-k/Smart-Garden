@@ -9,9 +9,9 @@
 
 // Default Values
 
-#define WIFI_SSID "WifiSSID"
-#define WIFI_PASSWORD "WifiPassword"
-#define MQTT_SERVER ""
+#define WIFI_SSID "Flamingo"
+#define WIFI_PASSWORD "123456789"
+#define MQTT_SERVER "broker.hivemq.com"
 #define MQTT_USERNAME ""
 #define MQTT_PASSWORD ""
 #define MQTT_CLIENT_NAME "SmartGarden-82FA"
@@ -60,6 +60,7 @@
 #include <EEPROM.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
+#include <Wire.h>
 
 // Moisture sensor pins as array
 uint8_t moistureSensorPins[] = {MOISTURE_SENSOR_1, MOISTURE_SENSOR_2, MOISTURE_SENSOR_3, MOISTURE_SENSOR_4, MOISTURE_SENSOR_5};
@@ -79,7 +80,7 @@ EspMQTTClient client(
 WiFiUDP ntpUDP;               // UDP client
 NTPClient timeClient(ntpUDP); // NTP client
 
-PCF8575 PCF(0X20);
+PCF8575 PCF;
 
 #define SERIAL_DEBUG 1
 
@@ -99,6 +100,11 @@ PCF8575 PCF(0X20);
 #endif
 
 StaticJsonDocument<800> config;
+
+String getTopicName(const String &topic)
+{
+  return "/" + String(MQTT_CLIENT_NAME) + topic;
+}
 
 void openValve(int valve)
 {
@@ -164,7 +170,7 @@ String convertToJsonString(JsonDocument &doc)
 
 void sendFeedbackToCloud(JsonDocument &payload)
 {
-  client.publish("/feedback",
+  client.publish(getTopicName("/feedback"),
                  convertToJsonString(payload));
   payload.clear();
 }
@@ -247,7 +253,7 @@ void loadConfig(JsonDocument &config)
 void onConnectionEstablished()
 {
   // (Re)Subscribe to MQTT topic to receive commands
-  client.subscribe("/commands", [](const String &payload)
+  client.subscribe(getTopicName("/commands"), [](const String &payload)
                    {
                      PT("Received payload: ");
 
@@ -314,9 +320,9 @@ void onConnectionEstablished()
                        return;
                      }
                      else if (command == CMD_GET_CONFIG){
-                       client.publish("/config",
+                       client.publish(getTopicName("/config"),
                                       convertToJsonString(config));
-                                      return;
+                       return;
                      }
                      else if (command == CMD_SET_CONFIG)
                      {
@@ -364,16 +370,38 @@ void onConnectionEstablished()
   );
 
   client.executeDelayed(2 * 1000, []()
-                        { client.publish("/status", "Online"); });
+                        { client.publish(getTopicName("/status"), "Online"); });
+}
+
+byte scanForI2CAddress()
+{
+  // Scan I2C bus for devices
+  PT("Scanning I2C bus for devices...");
+  Wire.begin();
+
+  byte error, address;
+  for (address = 0x20; address < 0x28; address++)
+  {
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+    if (error == 0)
+    {
+      P("I2C device found at address 0x");
+      Serial.print(address, HEX);
+      P(" !");
+      break;
+    }
+  }
+  return address;
 }
 
 void setup()
 {
-
 #if SERIAL_DEBUG
   Serial.begin(115200);
 #endif
   loadDefaultConfig();
+  saveConfig(config);
   EEPROM.begin(1024);
   loadConfig(config);
 
@@ -385,6 +413,8 @@ void setup()
 #if SERIAL_DEBUG
   client.enableDebuggingMessages(true);
 #endif
+
+  PCF.setAddress(scanForI2CAddress());
   if (!PCF.begin())
   {
     PT("PCF8575 not found");
@@ -393,7 +423,7 @@ void setup()
   {
     PT("PCF8575 not connected");
     while (1)
-      ;
+      delay(1000);
   }
 
   // Set Time client to GMT +5:30
@@ -438,7 +468,7 @@ void loop()
     if (!isWateringTime)
       for (uint8_t i = 0; i < wateringTimes.size(); i++)
       {
-        if (currentTime >= wateringTimes[i] && currentTime <= (wateringTimes[i] + config["watering_duration"].as<int>() * 5 + config["watering_interval"].as<int>() * 5))
+        if (currentTime >= wateringTimes[i].as<int>() && currentTime <= (wateringTimes[i].as<int>() + config["watering_duration"].as<int>() * 5 + config["watering_interval"].as<int>() * 5))
         {
           if (lastWateredDay != today || (lastWateredDay == today && lastWateredTime != wateringTimes[i]))
           {
