@@ -13,6 +13,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Change directory
+        run: cd frontend
+
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
@@ -49,7 +52,7 @@ jobs:
         run: pnpm build
 
       - name: Deploy
-        run: tar -cvf ./deploy.tar --exclude='*.map' ./frontend/dist/* && caprover deploy -h 'https://captain.s2.tebs.co.in' -p '${{ secrets.CAPROVER_PASSWORD }}' -a 'web-smartgarden-ui' -t './deploy.tar'
+        run: tar -cvf ./deploy.tar --exclude='*.map' ./dist/* && caprover deploy -h 'https://captain.s2.tebs.co.in' -p '${{ secrets.CAPROVER_PASSWORD }}' -a 'web-smartgarden-ui' -t './deploy.tar'
 
   build-api:
     runs-on: ubuntu-latest
@@ -57,5 +60,36 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Change directory
+        run: cd backend
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 7
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install Caprover
+        run: pnpm i -g caprover
+
       - name: Deploy
-        run: tar -cvf ./deploy.tar --exclude='*.map' ./backend/* && caprover deploy -h 'https://captain.s2.tebs.co.in' -p '${{ secrets.CAPROVER_PASSWORD }}' -a 'service-smartgarden-api' -t './deploy.tar'
+        run: tar -cvf ./deploy.tar --exclude='*.map' ./* && caprover deploy -h 'https://captain.s2.tebs.co.in' -p '${{ secrets.CAPROVER_PASSWORD }}' -a 'service-smartgarden-api' -t './deploy.tar'
