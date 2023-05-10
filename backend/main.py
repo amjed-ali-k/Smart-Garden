@@ -1,11 +1,6 @@
 from typing import Union
 from fastapi import FastAPI
 from fastapi_mqtt import FastMQTT, MQTTConfig
-from deta import Deta  # Import Deta
-
-
-deta = Deta()
-db = deta.Base("simple_db")
 
 
 app = FastAPI()
@@ -35,7 +30,7 @@ async def subscribe_feedback(client, topic, payload, qos, properties):
     print(topic)
     print(qos)
     print(properties)
-    db.put({"topic": topic, "payload": payload.decode("utf-8")})
+
 
 @app.get("/")
 async def read_root():
