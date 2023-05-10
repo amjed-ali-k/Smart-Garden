@@ -8,13 +8,15 @@ on:
 jobs:
   build-frontend:
     runs-on: ubuntu-latest
-    name: Deploy to Caprover
+    name: Deploy Frontend to Caprover
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          path: frontend
 
       - name: Change directory
-        run: cd frontend
+        run: ls
 
       - name: Install Node.js
         uses: actions/setup-node@v3
@@ -56,40 +58,20 @@ jobs:
 
   build-api:
     runs-on: ubuntu-latest
-    name: Deploy to Caprover
+    name: Deploy Backend to Caprover
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Change directory
-        run: cd backend
+        with:
+          path: backend
+
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 16
 
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
-        id: pnpm-install
-        with:
-          version: 7
-          run_install: false
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v3
-        name: Setup pnpm cache
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Install Caprover
-        run: pnpm i -g caprover
+        run: npm i -G caprover
 
       - name: Deploy
         run: tar -cvf ./deploy.tar --exclude='*.map' ./* && caprover deploy -h 'https://captain.s2.tebs.co.in' -p '${{ secrets.CAPROVER_PASSWORD }}' -a 'service-smartgarden-api' -t './deploy.tar'
