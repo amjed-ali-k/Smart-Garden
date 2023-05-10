@@ -5,11 +5,6 @@ icon: ./icon.png
 
 micros:
 
-- name: api
-  src: ./backend
-  engine: python3.9
-  run: uvicorn main:app
-  
 - name: frontend
   src: ./frontend
   engine: react

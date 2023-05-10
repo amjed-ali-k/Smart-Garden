@@ -25,17 +25,17 @@ mqtt.init_app(app)
 @mqtt.on_connect()
 def connect(client, flags, rc, properties):
     mqtt.subscribe("/SmartGarden-82FA/feedback")
+    print("Connected")
 
 
-@mqtt.on_message()
-async def message(client, topic, payload, qos, properties):
+@mqtt.subscribe("/SmartGarden-82FA/feedback")
+async def subscribe_feedback(client, topic, payload, qos, properties):
     print("Received message")
     print(payload)
     print(topic)
     print(qos)
     print(properties)
     db.put({"topic": topic, "payload": payload.decode("utf-8")})
-
 
 @app.get("/")
 async def read_root():
