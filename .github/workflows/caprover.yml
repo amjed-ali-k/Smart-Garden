@@ -13,10 +13,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          path: frontend
+          path: repo
 
       - name: Change directory
-        run: mv ./frontend/* ./
+        run: mv ./repo/frontend/* ./ && rm -rf ./repo
 
       - name: Install Node.js
         uses: actions/setup-node@v3
@@ -63,10 +63,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          path: backend
+          path: repo
 
       - name: Change directory
-        run: mv ./backend/* ./
+        run: mv ./repo/backend/* ./ && rm -rf ./repo
 
       - name: Install Node.js
         uses: actions/setup-node@v3
