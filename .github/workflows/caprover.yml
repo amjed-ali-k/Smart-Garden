@@ -74,7 +74,7 @@ jobs:
           node-version: 16
 
       - name: Install Caprover
-        run: npm i -G caprover
+        run: npm install -g caprover
 
       - name: Deploy
-        run: tar -cvf ./deploy.tar --exclude='*.map' ./* && caprover deploy -h 'https://captain.s2.tebs.co.in' -p '${{ secrets.CAPROVER_PASSWORD }}' -a 'service-smartgarden-api' -t './deploy.tar'
+        run: tar -cvf ./deploy.tar --exclude='node_modules' ./* && caprover deploy -h 'https://captain.s2.tebs.co.in' -p '${{ secrets.CAPROVER_PASSWORD }}' -a 'service-smartgarden-api' -t './deploy.tar'
