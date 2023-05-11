@@ -35,18 +35,21 @@ class DBSensorData(PayloadSensorData):
     created_at: float = Field(...)
 
 
-class DeviceConfig(BaseModel):
+class PublicDeviceConfig(BaseModel):
     watering_duration: int = Field(...)
     watering_intreval: int = Field(...)
     watering_enabled: bool = Field(...)
     watering_times: List[int] = Field(...)
     wifi_ssid: str = Field(...)
+    mqtt_client_name: str = Field(...)
+
+
+class DeviceConfig(PublicDeviceConfig):
     wifi_password: str = Field(...)
     mqtt_host: str = Field(...)
     mqtt_port: int = Field(...)
     mqtt_username: str = Field(...)
     mqtt_password: str = Field(...)
-    mqtt_client_name: str = Field(...)
 
 
 class DBConfigsIn(DeviceConfig):
@@ -62,6 +65,10 @@ class HardWareStatus(BaseModel):
     valve: List[bool] = Field(...)
     moisture: List[bool] = Field(...)
     uptime: int = Field(...)
+
+
+class HardwareStatusIn(HardWareStatus):
+    updated_at: float = Field(...)
 
 
 class DBHardwareStatus(HardWareStatus):

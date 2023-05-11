@@ -12,6 +12,8 @@ from models.device import (
     DBSensorDataIn,
     DeviceConfig,
     HardWareStatus,
+    HardwareStatusIn,
+    PublicDeviceConfig,
 )
 
 
@@ -72,11 +74,18 @@ async def get_sensor_history(
 
 
 @app.get("/sensor/{client_name}/status")
-async def get_sensor_status(client_name: str) -> HardWareStatus:
+async def get_sensor_status(client_name: str) -> HardwareStatusIn:
     data = db.hardware_status.find_one({"mqtt_client_name": client_name})
     if data is None:
         raise device_not_found
-    return HardWareStatus(**data)
+    res = HardwareStatusIn(**data)
+
+    if (
+        datetime.datetime.now() - datetime.datetime.fromtimestamp(res.updated_at)
+    ).seconds > 30:
+        publish(f"{client_name}/commands", {"command": "get_status"})
+    # publish command
+    return res
 
 
 class PostValveDetails(BaseModel):
@@ -86,7 +95,10 @@ class PostValveDetails(BaseModel):
 
 @app.post("/sensor/{client_name}/valve")
 def change_valve_status(client_name: str, details: PostValveDetails):
-    data = db.hardware_status.find_one({"mqtt_client_name": client_name})
+    data = db.hardware_status.update_one(
+        {"mqtt_client_name": client_name},
+        {"$set": {f"valve.{details.valve}": details.status}},
+    )
 
     if data is None:
         raise device_not_found
@@ -103,11 +115,11 @@ def change_valve_status(client_name: str, details: PostValveDetails):
 
 
 @app.get("/config/{client_name}")
-async def get_config(client_name: str) -> DBConfigsIn:
+async def get_config(client_name: str) -> PublicDeviceConfig:
     data = db.configs.find_one({"mqtt_client_name": client_name})
     if data is None:
         raise device_not_found
-    return data
+    return PublicDeviceConfig(**data)
 
 
 @app.post("/config/{client_name}")

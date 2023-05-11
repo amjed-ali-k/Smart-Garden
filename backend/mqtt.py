@@ -14,6 +14,7 @@ from models.device import (
     FeedbackRes3,
     FeedbackRes4,
     FeedbackRes5,
+    HardwareStatusIn,
     PayloadSensorData,
 )
 
@@ -65,8 +66,10 @@ def on_message_feedback(topic, client: mqtt.Client, message: mqtt.MQTTMessage):
         db.hardware_status.update_one(
             {"mqtt_client_name": client_name},
             {
-                "$set": DBHardwareStatus(
-                    **data.dict(), mqtt_client_name=client_name
+                "$set": HardwareStatusIn(
+                    **data.dict(),
+                    mqtt_client_name=client_name,
+                    updated_at=datetime.datetime.now().timestamp(),
                 ).dict()
             },
         )
@@ -83,8 +86,14 @@ def on_message_feedback(topic, client: mqtt.Client, message: mqtt.MQTTMessage):
         data = FeedbackRes3.parse_raw(message.payload)
         index = data.valve
         value = data.status
+
         db.hardware_status.update_one(
-            {"mqtt_client_name": client_name}, {"$set": {f"valve.{index}": value}}
+            {"mqtt_client_name": client_name},
+            {
+                "$set": {
+                    f"valve.{index}": value,
+                }
+            },
         )
 
     elif command == "uptime":

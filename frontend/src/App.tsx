@@ -4,7 +4,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 
 const fetcher = (url: string) => axios.get(url).then((res) => res.data);
-const deviceName = "Sensor-Gardner-3232";
+const deviceName = "SmartGarden-82FA";
 type StatusRes = {
   mqtt_client_name: string;
   valve: boolean[];
@@ -42,22 +42,22 @@ function App() {
           <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-black via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
             <a
               className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
+              href="https://github.com/amjed-ali-k"
               target="_blank"
               rel="noopener noreferrer"
             >
-              By{" "}
+              By Amjed Ali K
             </a>
           </div>
         </div>
 
-        <div className="grid grid-cols-5 gap-12">
+        <div className="grid grid-cols-2 lg:grid-cols-5 border-b py-8 gap-12">
           {status?.moisture.map((e, i) => (
             <MoistureSensor id={i} alert={e} />
           ))}
         </div>
 
-        <div className="grid grid-cols-5 gap-12">
+        <div className="grid grid-cols-2 lg:grid-cols-5 py-8 gap-12">
           {valves.map((e, i) => (
             <ValveButton
               id={i}
@@ -117,7 +117,7 @@ function ValveButton({
   return (
     <div
       onClick={onClick}
-      className={`border cursor-pointer duration-200 transition-all ease-in-out p-4 px-8 rounded-xl hover:bg-opacity-70 ${
+      className={`border cursor-pointer min-w-[130px] duration-200 transition-all ease-in-out p-4 px-8 rounded-xl hover:bg-opacity-70 ${
         active ? "bg-green-700" : "bg-transparent hover:bg-indigo-950"
       }`}
     >
@@ -150,7 +150,7 @@ function MoistureSensor({
   id: number;
 }) {
   return (
-    <div className="border-slate-100/40 border rounded-xl rounded-t-none overflow-hidden">
+    <div className="border-slate-100/40 min-w-[130px] border rounded-xl rounded-t-none overflow-hidden">
       <div className="bg-indigo-600 px-2 text-xs gap-4 text-white flex justify-between py-1 w-full">
         <p>Moisture sensor</p>
         <p>{id}</p>
