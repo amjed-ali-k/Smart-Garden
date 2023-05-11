@@ -8,9 +8,12 @@ from pydantic import BaseModel
 from db.db import db, mongoClient
 from mqtt import mqtt_start, mqtt_stop, publish
 from models.device import (
+    DBConfigs,
+    DBConfigsIn,
     DBHardwareStatus,
     DBSensorData,
     DBSensorDataIn,
+    DeviceConfig,
     HardWareStatus,
     PayloadSensorData,
 )
@@ -79,5 +82,33 @@ def change_valve_status(client_name: str, details: PostValveDetails):
             "valve": details.valve,
         },
     )
+
+    return {"success": True}
+
+
+@app.get("/config/{client_name}")
+async def get_config(client_name: str) -> DBConfigs:
+    data = db.configs.find_one({"mqtt_client_name": client_name})
+    if data is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return data
+
+
+@app.post("/config/{client_name}")
+async def set_config(client_name: str, config: DeviceConfig):
+    data = db.configs.find_one({"mqtt_client_name": client_name})
+    if data is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+    db.configs.update_one(
+        {"mqtt_client_name": client_name},
+        {
+            "$set": DBConfigsIn(
+                **config.dict(),
+                mqtt_client_name=client_name,
+                updated_at=datetime.datetime.now().timestamp(),
+            ).dict()
+        },
+    )
+    publish(f"/{client_name}/commands", {"command": "set_config", **config.dict()})
 
     return {"success": True}

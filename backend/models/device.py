@@ -49,12 +49,12 @@ class DeviceConfig(BaseModel):
     mqtt_client_name: str = Field(...)
 
 
-class DBConfigs(DeviceConfig):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-
-
 class DBConfigsIn(DeviceConfig):
-    pass
+    updated_at: float = Field(...)
+
+
+class DBConfigs(DBConfigsIn):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
 
 
 class HardWareStatus(BaseModel):
