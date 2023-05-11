@@ -1,10 +1,9 @@
 import datetime
 from typing import List
 from fastapi import FastAPI, HTTPException
-import os
+from fastapi.responses import FileResponse
 
 from pydantic import BaseModel
-
 from db.db import db, mongoClient
 from mqtt import mqtt_start, mqtt_stop, publish
 from models.device import (
@@ -13,9 +12,6 @@ from models.device import (
     DeviceConfig,
     HardWareStatus,
 )
-
-
-app = FastAPI()
 
 
 app = FastAPI()
@@ -33,9 +29,16 @@ def disconnect_mqtt():
     mongoClient.close()
 
 
+# favicon
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("favicon.ico")
+
+
 @app.get("/")
 async def read_root():
-    return {"Hello": "World"}
+    # Show nice welcome message
+    return {"message": "Welcome to your smart garden"}
 
 
 device_not_found = HTTPException(status_code=404, detail="Device not found")
