@@ -54,7 +54,7 @@ jobs:
         run: pnpm build
 
       - name: Deploy
-        run: tar -cvf ./deploy.tar --exclude='*.map' ./dist/* && caprover deploy -h 'https://captain.s2.tebs.co.in' -p '${{ secrets.CAPROVER_PASSWORD }}' -a 'web-smartgarden-ui' -t './deploy.tar'
+        run: mv captain-definition ./ && tar -cvf ./deploy.tar captain-definition --exclude='*.map' ./dist/* && caprover deploy -h 'https://captain.s2.tebs.co.in' -p '${{ secrets.CAPROVER_PASSWORD }}' -a 'web-smartgarden-ui' -t './deploy.tar'
 
   build-api:
     runs-on: ubuntu-latest
