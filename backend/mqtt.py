@@ -98,7 +98,11 @@ def on_message_feedback(topic, client: mqtt.Client, message: mqtt.MQTTMessage):
         if (
             db.configs.update_one(
                 {"mqtt_client_name": data.mqtt_client_name},
-                {"$set": DBConfigsIn(**data.dict()).dict()},
+                {
+                    "$set": DBConfigsIn(
+                        **data.dict(), updated_at=datetime.datetime.now().timestamp()
+                    ).dict()
+                },
             ).modified_count
             == 0
         ):
