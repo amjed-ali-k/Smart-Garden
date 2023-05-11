@@ -18,5 +18,10 @@ fi
 # activate virtual environment
 source venv/bin/activate
 
+# load environment variables from .env file
+set -a
+source .env
+set +a
+
 # run fastapi using uvicorn
 uvicorn main:app --reload

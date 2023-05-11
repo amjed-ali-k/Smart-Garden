@@ -1,35 +1,28 @@
-from typing import Union
+from typing import List
 from fastapi import FastAPI
-from fastapi_mqtt import FastMQTT, MQTTConfig
+import os
+
+from db.db import db, mongoClient
+from mqtt import mqtt_start, mqtt_stop
+from models.device import DBSensorData, PayloadSensorData
 
 
 app = FastAPI()
 
-mqtt_config = MQTTConfig(
-    host="broker.hivemq.com",
-    port=1883,
-    keepalive=60,
-    username=None,
-    password=None,
-)
 
-mqtt = FastMQTT(config=mqtt_config)
-mqtt.init_app(app)
+app = FastAPI()
 
 
-@mqtt.on_connect()
-def connect(client, flags, rc, properties):
-    mqtt.subscribe("/SmartGarden-82FA/feedback")
-    print("Connected")
+@app.on_event("startup")
+def connect_mqtt():
+    mqtt_start()
+    mongoClient.start_session()
 
 
-@mqtt.subscribe("/SmartGarden-82FA/feedback")
-async def subscribe_feedback(client, topic, payload, qos, properties):
-    print("Received message")
-    print(payload)
-    print(topic)
-    print(qos)
-    print(properties)
+@app.on_event("shutdown")
+def disconnect_mqtt():
+    mqtt_stop()
+    mongoClient.close()
 
 
 @app.get("/")
@@ -37,6 +30,10 @@ async def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/items/{item_id}")
-async def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+@app.get("/mqtt-logs/{client_name}")
+async def get_mqtt_logs(client_name: str) -> List[PayloadSensorData]:
+    res = list(db.sensor_history.find({"client_name": client_name}, limit=100))
+    response: List[PayloadSensorData] = []
+    for r in res:
+        response.append(PayloadSensorData(**r))
+    return response

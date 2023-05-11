@@ -25,12 +25,14 @@
 #define SOLENOID_VALVE_3 2
 #define SOLENOID_VALVE_4 3
 #define SOLENOID_VALVE_5 4
+#define SOLENOID_VALVE_COUNT 5
 
 #define MOISTURE_SENSOR_1 5
 #define MOISTURE_SENSOR_2 6
 #define MOISTURE_SENSOR_3 7
 #define MOISTURE_SENSOR_4 8
 #define MOISTURE_SENSOR_5 9
+#define MOISTURE_SENSOR_COUNT 5
 
 // Commands from Cloud
 #define CMD_OPEN_VALVE "open_valve"
@@ -63,9 +65,9 @@
 #include <Wire.h>
 
 // Moisture sensor pins as array
-uint8_t moistureSensorPins[] = {MOISTURE_SENSOR_1, MOISTURE_SENSOR_2, MOISTURE_SENSOR_3, MOISTURE_SENSOR_4, MOISTURE_SENSOR_5};
+uint8_t moistureSensorPins[MOISTURE_SENSOR_COUNT] = {MOISTURE_SENSOR_1, MOISTURE_SENSOR_2, MOISTURE_SENSOR_3, MOISTURE_SENSOR_4, MOISTURE_SENSOR_5};
 // Solenoid Valve pins as array
-uint8_t solenoidValvePins[] = {SOLENOID_VALVE_1, SOLENOID_VALVE_2, SOLENOID_VALVE_3, SOLENOID_VALVE_4, SOLENOID_VALVE_5};
+uint8_t solenoidValvePins[SOLENOID_VALVE_COUNT] = {SOLENOID_VALVE_1, SOLENOID_VALVE_2, SOLENOID_VALVE_3, SOLENOID_VALVE_4, SOLENOID_VALVE_5};
 
 EspMQTTClient client(
     WIFI_SSID,
@@ -133,7 +135,7 @@ bool valveStatus(int valve)
 void openAllValves()
 {
 
-  for (int i = 0; i < 5; i++)
+  for (int i = 0; i < SOLENOID_VALVE_COUNT; i++)
   {
     openValve(i);
   }
@@ -141,7 +143,7 @@ void openAllValves()
 
 void closeAllValves()
 {
-  for (int i = 0; i < 5; i++)
+  for (int i = 0; i < SOLENOID_VALVE_COUNT; i++)
   {
     closeValve(i);
   }
@@ -168,11 +170,15 @@ String convertToJsonString(JsonDocument &doc)
   return output;
 }
 
+void sendFeedbackToCloud(JsonDocument &payload, const String &topic)
+{
+  client.publish(getTopicName(topic), convertToJsonString(payload));
+  payload.clear();
+}
+
 void sendFeedbackToCloud(JsonDocument &payload)
 {
-  client.publish(getTopicName("/feedback"),
-                 convertToJsonString(payload));
-  payload.clear();
+  sendFeedbackToCloud(payload, "/feedback");
 }
 
 void loadDefaultConfig()
@@ -320,7 +326,8 @@ void onConnectionEstablished()
                        return;
                      }
                      else if (command == CMD_GET_CONFIG){
-                       client.publish(getTopicName("/config"),
+                       client.publish(getTopicName("/feedback"),
+                                      config[command] = CMD_CONFIG;
                                       convertToJsonString(config));
                        return;
                      }
@@ -337,11 +344,11 @@ void onConnectionEstablished()
                         StaticJsonDocument<800> o_pld;
                         o_pld["command"] = CMD_STATUS;
                         o_pld["uptime"] = ESP.getCycleCount() / (ESP.getCpuFreqMHz() * 1E6);
-                        for ( uint8_t i = 0; i < 5; i++)
+                        for (uint8_t i = 0; i < MOISTURE_SENSOR_COUNT; i++)
                         {
                           o_pld["moisture" + String(i)] = readMoistureSensor(i);
                         }
-                        for (uint8_t i = 0; i < 5; i++)
+                        for (uint8_t i = 0; i < SOLENOID_VALVE_COUNT; i++)
                         {
                           o_pld["valve" + String(i)] = valveStatus(i);
                         }
@@ -441,6 +448,8 @@ int currentWateringTime = 0;
 
 unsigned long lastWateringStart = 0;
 
+unsigned long lastupdate = 0;
+
 void loop()
 {
   client.loop();
@@ -451,7 +460,7 @@ void loop()
 
     lastRun = millis();
     // Check if any valve is open and close it if moisture is detected
-    for (uint8_t i = 0; i < 5; i++)
+    for (uint8_t i = 0; i < MOISTURE_SENSOR_COUNT; i++)
     {
       if (readMoistureSensor(i) && valveStatus(i))
       {
@@ -468,7 +477,7 @@ void loop()
     if (!isWateringTime)
       for (uint8_t i = 0; i < wateringTimes.size(); i++)
       {
-        if (currentTime >= wateringTimes[i].as<int>() && currentTime <= (wateringTimes[i].as<int>() + config["watering_duration"].as<int>() * 5 + config["watering_interval"].as<int>() * 5))
+        if (currentTime >= wateringTimes[i].as<int>() && currentTime <= (wateringTimes[i].as<int>() + config["watering_duration"].as<int>() * 5 + config["watering_interval"].as<int>() * MOISTURE_SENSOR_COUNT))
         {
           if (lastWateredDay != today || (lastWateredDay == today && lastWateredTime != wateringTimes[i]))
           {
@@ -491,7 +500,7 @@ void loop()
       {
         closeValve(currentWateringValve);
         currentWateringValve++;
-        if (currentWateringValve > 4)
+        if (currentWateringValve > SOLENOID_VALVE_COUNT - 1)
         {
           wateringStarted = false;
           isWateringTime = false;
@@ -523,5 +532,20 @@ void loop()
       isWateringTime = false;
       wateringStarted = false;
     }
+  }
+
+  // sent all sensor reading to server once in 5 minutes
+  if (millis() - lastupdate > 5 * 60E3)
+  {
+    lastupdate = millis();
+    StaticJsonDocument<200> o_pld;
+    JsonArray arr = o_pld["moisture"].to<JsonArray>();
+    for (uint8_t i = 0; i < MOISTURE_SENSOR_COUNT; i++)
+      arr.add(readMoistureSensor(i);
+    JsonArray arr = o_pld["valve"].to<JsonArray>();
+    for(uint8_t i=0;i<SOLENOID_VALVE_COUNT;i++)
+      arr.add(valveStatus(i);
+    o_pld["client_name"] = config["mqtt_client_name"];
+    sendFeedbackToCloud(o_pld, "/sensor-data");
   }
 }
