@@ -1,4 +1,36 @@
+import { Icon } from "@iconify/react";
+import useSWR from "swr";
+import axios from "axios";
+import { useEffect, useState } from "react";
+
+const fetcher = (url: string) => axios.get(url).then((res) => res.data);
+const deviceName = "Sensor-Gardner-3232";
+type StatusRes = {
+  mqtt_client_name: string;
+  valve: boolean[];
+  moisture: boolean[];
+  uptime: number;
+};
+
 function App() {
+  const {
+    data: status,
+    error,
+    isLoading,
+  } = useSWR<StatusRes>(
+    `https://service-smartgarden-api.s2.tebs.co.in/sensor/${deviceName}/status`,
+    fetcher,
+    {
+      refreshInterval: 20000,
+    }
+  );
+
+  const [valves, setValves] = useState<boolean[]>([]);
+
+  useEffect(() => {
+    if (status) setValves(status.valve);
+  }, [status]);
+
   return (
     <>
       <main className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -19,11 +51,38 @@ function App() {
           </div>
         </div>
 
+        <div className="grid grid-cols-5 gap-12">
+          {status?.moisture.map((e, i) => (
+            <MoistureSensor id={i} alert={e} />
+          ))}
+        </div>
+
+        <div className="grid grid-cols-5 gap-12">
+          {valves.map((e, i) => (
+            <ValveButton
+              id={i}
+              active={e}
+              onClick={() => {
+                const newStatus = [...valves];
+                newStatus[i] = !newStatus[i];
+                setValves(newStatus);
+                axios.post(
+                  `https://service-smartgarden-api.s2.tebs.co.in/sensor/${deviceName}/valve`,
+                  {
+                    valve: i,
+                    status: newStatus[i],
+                  }
+                );
+              }}
+            />
+          ))}
+        </div>
+
         <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:blur-2xl after:content-[''] before:bg-gradient-to-br before:from-transparent before:to-blue-700 before:opacity-10 after:from-sky-900 after:via-[#0141ff] after:opacity-40 before:lg:h-[360px]"></div>
 
         <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
           <a
-            href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
+            href="https://service-smartgarden-api.s2.tebs.co.in/docs"
             className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:bg-gray-100 hover:border-neutral-700 hover:bg-neutral-800/30"
             target="_blank"
             rel="noopener noreferrer"
@@ -35,7 +94,7 @@ function App() {
               </span>
             </h2>
             <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-              Find in-depth information about Next.js features and API.
+              Find in-depth information about API.
             </p>
           </a>
         </div>
@@ -45,3 +104,78 @@ function App() {
 }
 
 export default App;
+
+function ValveButton({
+  active = false,
+  id,
+  onClick,
+}: {
+  active?: boolean;
+  id: number;
+  onClick?: () => void;
+}) {
+  return (
+    <div
+      onClick={onClick}
+      className={`border cursor-pointer duration-200 transition-all ease-in-out p-4 px-8 rounded-xl hover:bg-opacity-70 ${
+        active ? "bg-green-700" : "bg-transparent hover:bg-indigo-950"
+      }`}
+    >
+      <div className="relative">
+        <div className="">
+          <Icon
+            className="w-16 h-16 relative"
+            icon="material-symbols:water-do-outline"
+          />
+        </div>
+        {active && (
+          <div className="absolute flex items-center justify-center h-full inset-0 ">
+            <Icon
+              className="w-12 h-12 animate-ping "
+              icon="material-symbols:water-do-outline"
+            />
+          </div>
+        )}
+      </div>
+      <p className="text-sm text-center pb-2 pt-1">Valve {id}</p>
+    </div>
+  );
+}
+
+function MoistureSensor({
+  id,
+  alert = false,
+}: {
+  alert?: boolean;
+  id: number;
+}) {
+  return (
+    <div className="border-slate-100/40 border rounded-xl rounded-t-none overflow-hidden">
+      <div className="bg-indigo-600 px-2 text-xs gap-4 text-white flex justify-between py-1 w-full">
+        <p>Moisture sensor</p>
+        <p>{id}</p>
+      </div>
+      <div className="p-8 pb-0">
+        <Icon
+          className={`w-16 h-16 ${alert ? "text-red-500" : "text-green-500"}`}
+          icon={
+            alert
+              ? "line-md:alert-circle"
+              : "line-md:circle-to-confirm-circle-transition"
+          }
+        />
+      </div>
+      <div
+        className={`${
+          alert ? "visible" : "invisible"
+        } text-xs text-center p-2 text-red-500`}
+      >
+        Dectected
+      </div>
+    </div>
+  );
+}
+
+function CenteredItem({ children }: { children: React.ReactNode }) {
+  return <div className="flex items-center justify-center">{children}</div>;
+}
