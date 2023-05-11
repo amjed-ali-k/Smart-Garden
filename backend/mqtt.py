@@ -7,7 +7,6 @@ import paho.mqtt.client as mqtt
 from db.db import db
 from models.device import (
     DBConfigsIn,
-    DBHardwareStatus,
     DBSensorDataIn,
     FeedbackRes1,
     FeedbackRes2,
@@ -60,7 +59,16 @@ def on_message_feedback(topic, client: mqtt.Client, message: mqtt.MQTTMessage):
     if not decoded.get("command"):
         return
     command = decoded["command"]
-    print(command)
+
+    db.device_logs.insert_one(
+        {
+            **decoded,
+            "mqtt_client_name": client_name,
+            "type": "feedback",
+            "created_at": datetime.datetime.now().timestamp(),
+        }
+    )
+
     if command == "status":
         data = FeedbackRes1.parse_raw(message.payload)
         db.hardware_status.update_one(
@@ -134,4 +142,11 @@ def on_message_sensor_data(topic, client: mqtt.Client, message: mqtt.MQTTMessage
 
 
 def publish(topic: str, payload: dict):
+    db.device_logs.insert_one(
+        {
+            **payload,
+            "topic": topic,
+            "type": "publish_from_cloud",
+        }
+    )
     mqttClient.publish(topic, payload=json.dumps(payload))

@@ -147,3 +147,12 @@ async def reboot(client_name: str):
         raise device_not_found
     publish(f"/{client_name}/commands", {"command": "restart"})
     return {"success": True}
+
+
+@app.get("/device/{client_name}/logs")
+async def get_logs(client_name: str):
+    data = db.device_logs.find(
+        {"mqtt_client_name": client_name}, limit=100, sort=[("created_at", -1)]
+    )
+
+    return [{**i, "_id": str(i["_id"])} for i in data]

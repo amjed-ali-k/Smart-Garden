@@ -13,11 +13,7 @@ type StatusRes = {
 };
 
 function App() {
-  const {
-    data: status,
-    error,
-    isLoading,
-  } = useSWR<StatusRes>(
+  const { data: status, isLoading } = useSWR<StatusRes>(
     `https://service-smartgarden-api.s2.tebs.co.in/sensor/${deviceName}/status`,
     fetcher,
     {
@@ -50,53 +46,62 @@ function App() {
             </a>
           </div>
         </div>
-
         <div className="grid grid-cols-2 lg:grid-cols-5 border-b py-8 gap-12">
-          {status?.moisture.map((e, i) => (
-            <MoistureSensor id={i} alert={e} />
-          ))}
+          {isLoading ? (
+            <>
+              <CardSkelton />
+              <CardSkelton />
+              <CardSkelton />
+            </>
+          ) : (
+            status?.moisture.map((e, i) => <MoistureSensor id={i} alert={e} />)
+          )}
         </div>
-
         <div className="grid grid-cols-2 lg:grid-cols-5 py-8 gap-12">
-          {valves.map((e, i) => (
-            <ValveButton
-              id={i}
-              active={e}
-              onClick={() => {
-                const newStatus = [...valves];
-                newStatus[i] = !newStatus[i];
-                setValves(newStatus);
-                axios.post(
-                  `https://service-smartgarden-api.s2.tebs.co.in/sensor/${deviceName}/valve`,
-                  {
-                    valve: i,
-                    status: newStatus[i],
-                  }
-                );
-              }}
-            />
-          ))}
+          {isLoading ? (
+            <>
+              <CardSkelton />
+              <CardSkelton />
+              <CardSkelton />
+            </>
+          ) : (
+            valves.map((e, i) => (
+              <ValveButton
+                id={i}
+                active={e}
+                onClick={() => {
+                  const newStatus = [...valves];
+                  newStatus[i] = !newStatus[i];
+                  setValves(newStatus);
+                  axios.post(
+                    `https://service-smartgarden-api.s2.tebs.co.in/sensor/${deviceName}/valve`,
+                    {
+                      valve: i,
+                      status: newStatus[i],
+                    }
+                  );
+                }}
+              />
+            ))
+          )}
         </div>
-
-        <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:blur-2xl after:content-[''] before:bg-gradient-to-br before:from-transparent before:to-blue-700 before:opacity-10 after:from-sky-900 after:via-[#0141ff] after:opacity-40 before:lg:h-[360px]"></div>
-
+        <div className="relative -z-30 flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:blur-2xl after:content-[''] before:bg-gradient-to-br before:from-transparent before:to-blue-700 before:opacity-10 after:from-sky-900 after:via-[#0141ff] after:opacity-40 before:lg:h-[360px]"></div>
         <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
-          <a
-            href="https://service-smartgarden-api.s2.tebs.co.in/docs"
-            className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:bg-gray-100 hover:border-neutral-700 hover:bg-neutral-800/30"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={`mb-3 text-2xl font-semibold`}>
-              Docs{" "}
-              <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-                -&gt;
-              </span>
-            </h2>
-            <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-              Find in-depth information about API.
-            </p>
-          </a>
+          <BottomButtons
+            title="API Docs"
+            description="Find in-depth information about API."
+            link="https://service-smartgarden-api.s2.tebs.co.in/docs"
+          />
+          <BottomButtons
+            title="Configuration"
+            description="Configure the current system [TBD]"
+            // link="https://service-smartgarden-api.s2.tebs.co.in/docs"
+          />
+          <BottomButtons
+            title="Logs"
+            description="System events and internal logs"
+            // link="https://service-smartgarden-api.s2.tebs.co.in/docs"
+          />
         </div>
       </main>
     </>
@@ -104,6 +109,19 @@ function App() {
 }
 
 export default App;
+
+function CardSkelton() {
+  return (
+    <div className=" mx-auto border-2 border-slate-100/40 rounded-md min-w-[130px]">
+      <div className="flex flex-col items-center h-full mt-4 animate-pulse">
+        <div className="w-16 h-16 bg-gray-500 rounded-full "></div>
+        <div className="flex flex-col ">
+          <div className="h-2 my-4 bg-gray-500 rounded-md w-20 "></div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ValveButton({
   active = false,
@@ -176,6 +194,32 @@ function MoistureSensor({
   );
 }
 
-function CenteredItem({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center justify-center">{children}</div>;
+function BottomButtons({
+  title,
+  link,
+  description,
+  onClick,
+}: {
+  title: string;
+  link?: string;
+  description: string;
+  onClick?: () => void;
+}) {
+  return (
+    <a
+      href={link}
+      onClick={onClick}
+      className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:bg-gray-100 hover:border-neutral-700 hover:bg-neutral-800/30"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <h2 className={`mb-3 text-2xl font-semibold flex items-center `}>
+        {title}{" "}
+        <span className="inline-block ml-2 transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+          <Icon icon="line-md:arrow-small-right" />
+        </span>
+      </h2>
+      <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>{description}</p>
+    </a>
+  );
 }
