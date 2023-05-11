@@ -6,12 +6,9 @@ from typing import Dict
 import paho.mqtt.client as mqtt
 from db.db import db
 from models.device import (
-    DBConfigs,
     DBConfigsIn,
     DBHardwareStatus,
-    DBSensorData,
     DBSensorDataIn,
-    FeedbackRes,
     FeedbackRes1,
     FeedbackRes2,
     FeedbackRes3,

@@ -8,14 +8,10 @@ from pydantic import BaseModel
 from db.db import db, mongoClient
 from mqtt import mqtt_start, mqtt_stop, publish
 from models.device import (
-    DBConfigs,
     DBConfigsIn,
-    DBHardwareStatus,
-    DBSensorData,
     DBSensorDataIn,
     DeviceConfig,
     HardWareStatus,
-    PayloadSensorData,
 )
 
 
@@ -110,4 +106,13 @@ async def set_config(client_name: str, config: DeviceConfig):
     )
     publish(f"/{client_name}/commands", {"command": "set_config", **config.dict()})
 
+    return {"success": True}
+
+
+@app.post("/sensor/{client_name}/reboot")
+async def reboot(client_name: str):
+    data = db.configs.find_one({"mqtt_client_name": client_name})
+    if data is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+    publish(f"/{client_name}/commands", {"command": "restart"})
     return {"success": True}

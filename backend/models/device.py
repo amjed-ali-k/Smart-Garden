@@ -94,7 +94,3 @@ class FeedbackRes4(BaseModel):
 
 class FeedbackRes5(DeviceConfig):
     command: str = "config"
-
-
-# create union of all feedback responses
-FeedbackRes = FeedbackRes1 | FeedbackRes2 | FeedbackRes3 | FeedbackRes4 | FeedbackRes5
