@@ -102,7 +102,11 @@ def on_message_feedback(topic, client: mqtt.Client, message: mqtt.MQTTMessage):
             ).modified_count
             == 0
         ):
-            db.configs.insert_one(DBConfigsIn(**data.dict()).dict())
+            db.configs.insert_one(
+                DBConfigsIn(
+                    **data.dict(), updated_at=datetime.datetime.now().timestamp()
+                ).dict()
+            )
 
     db.mqtt_logs.insert_one(decoded)
 

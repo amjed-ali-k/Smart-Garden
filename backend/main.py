@@ -38,6 +38,9 @@ async def read_root():
     return {"Hello": "World"}
 
 
+device_not_found = HTTPException(status_code=404, detail="Device not found")
+
+
 @app.get("/sensor_history/{client_name}/{from_date}/{to_date}")
 async def get_sensor_history(
     client_name: str, from_date: datetime.datetime, to_date: datetime.datetime
@@ -55,7 +58,7 @@ async def get_sensor_history(
 async def get_sensor_status(client_name: str) -> HardWareStatus:
     data = db.hardware_status.find_one({"mqtt_client_name": client_name})
     if data is None:
-        raise HTTPException(status_code=404, detail="Device not found")
+        raise device_not_found
     return HardWareStatus(**data)
 
 
@@ -69,7 +72,7 @@ def change_valve_status(client_name: str, details: PostValveDetails):
     data = db.hardware_status.find_one({"mqtt_client_name": client_name})
 
     if data is None:
-        raise HTTPException(status_code=404, detail="Device not found")
+        raise device_not_found
 
     publish(
         f"/{client_name}/commands",
@@ -86,7 +89,7 @@ def change_valve_status(client_name: str, details: PostValveDetails):
 async def get_config(client_name: str) -> DBConfigsIn:
     data = db.configs.find_one({"mqtt_client_name": client_name})
     if data is None:
-        raise HTTPException(status_code=404, detail="Device not found")
+        raise device_not_found
     return data
 
 
@@ -94,7 +97,7 @@ async def get_config(client_name: str) -> DBConfigsIn:
 async def set_config(client_name: str, config: DeviceConfig):
     data = db.configs.find_one({"mqtt_client_name": client_name})
     if data is None:
-        raise HTTPException(status_code=404, detail="Device not found")
+        raise device_not_found
     db.configs.update_one(
         {"mqtt_client_name": client_name},
         {
@@ -113,6 +116,6 @@ async def set_config(client_name: str, config: DeviceConfig):
 async def reboot(client_name: str):
     data = db.configs.find_one({"mqtt_client_name": client_name})
     if data is None:
-        raise HTTPException(status_code=404, detail="Device not found")
+        raise device_not_found
     publish(f"/{client_name}/commands", {"command": "restart"})
     return {"success": True}
