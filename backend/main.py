@@ -11,7 +11,6 @@ from models.device import (
     DBConfigsIn,
     DBSensorDataIn,
     DeviceConfig,
-    HardWareStatus,
     HardwareStatusIn,
     PublicDeviceConfig,
 )
