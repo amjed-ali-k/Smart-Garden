@@ -119,5 +119,5 @@ def on_message_sensor_data(topic, client: mqtt.Client, message: mqtt.MQTTMessage
     )
 
 
-def publish(topic, payload):
-    mqttClient.publish(topic, payload)
+def publish(topic: str, payload: dict):
+    mqttClient.publish(topic, payload=json.dumps(payload))

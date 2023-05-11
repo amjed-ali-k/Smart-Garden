@@ -87,7 +87,7 @@ def change_valve_status(client_name: str, details: PostValveDetails):
 
 
 @app.get("/config/{client_name}")
-async def get_config(client_name: str) -> DBConfigs:
+async def get_config(client_name: str) -> DBConfigsIn:
     data = db.configs.find_one({"mqtt_client_name": client_name})
     if data is None:
         raise HTTPException(status_code=404, detail="Device not found")
@@ -104,7 +104,6 @@ async def set_config(client_name: str, config: DeviceConfig):
         {
             "$set": DBConfigsIn(
                 **config.dict(),
-                mqtt_client_name=client_name,
                 updated_at=datetime.datetime.now().timestamp(),
             ).dict()
         },
