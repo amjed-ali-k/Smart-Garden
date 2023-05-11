@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import random
@@ -9,6 +10,7 @@ from models.device import (
     DBConfigsIn,
     DBHardwareStatus,
     DBSensorData,
+    DBSensorDataIn,
     FeedbackRes,
     FeedbackRes1,
     FeedbackRes2,
@@ -105,10 +107,17 @@ def on_message_feedback(topic, client: mqtt.Client, message: mqtt.MQTTMessage):
         ):
             db.configs.insert_one(DBConfigsIn(**data.dict()).dict())
 
+    db.mqtt_logs.insert_one(decoded)
+
 
 def on_message_sensor_data(topic, client: mqtt.Client, message: mqtt.MQTTMessage):
-    print(
-        db.sensor_history.insert_one(
-            PayloadSensorData.parse_raw(message.payload).dict()
-        ).inserted_id
+    db.sensor_history.insert_one(
+        DBSensorDataIn(
+            **PayloadSensorData.parse_raw(message.payload).dict(),
+            created_at=datetime.datetime.now().timestamp(),
+        ).dict()
     )
+
+
+def publish(topic, payload):
+    mqttClient.publish(topic, payload)

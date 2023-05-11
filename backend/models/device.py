@@ -26,11 +26,13 @@ class PayloadSensorData(BaseModel):
     client_name: str = Field(...)
 
 
-class DBSensorData(BaseModel):
-    valve: List[bool] = Field(...)
-    moisture: List[bool] = Field(...)
-    client_name: str = Field(...)
+class DBSensorDataIn(PayloadSensorData):
+    created_at: float = Field(...)
+
+
+class DBSensorData(PayloadSensorData):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    created_at: float = Field(...)
 
 
 class DeviceConfig(BaseModel):
@@ -55,12 +57,15 @@ class DBConfigsIn(DeviceConfig):
     pass
 
 
-class DBHardwareStatus(BaseModel):
+class HardWareStatus(BaseModel):
     mqtt_client_name: str = Field(...)
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     valve: List[bool] = Field(...)
     moisture: List[bool] = Field(...)
     uptime: int = Field(...)
+
+
+class DBHardwareStatus(HardWareStatus):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
 
 
 class FeedbackRes1(BaseModel):
