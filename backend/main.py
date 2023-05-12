@@ -79,10 +79,11 @@ async def get_sensor_status(client_name: str) -> HardwareStatusIn:
     if data is None:
         raise device_not_found
     res = HardwareStatusIn(**data)
-
-    if (
-        datetime.datetime.now(tz) - datetime.datetime.fromtimestamp(res.updated_at, tz)
-    ).seconds > 30:
+    diff = datetime.datetime.now(tz) - datetime.datetime.fromtimestamp(
+        res.updated_at, tz
+    )
+    print("Requested status - Time diffrence is : ", diff.seconds)
+    if diff.seconds > 30:
         publish(f"/{client_name}/commands", {"command": "get_status"})
     # publish command
     return res

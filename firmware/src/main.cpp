@@ -344,13 +344,17 @@ void onConnectionEstablished()
                         StaticJsonDocument<800> o_pld;
                         o_pld["command"] = CMD_STATUS;
                         o_pld["uptime"] = ESP.getCycleCount() / (ESP.getCpuFreqMHz() * 1E6);
+                        
+                        JsonArray valve_arr = o_pld["valve"];
+                        JsonArray moisture_arr = o_pld["moisture"];
+
                         for (uint8_t i = 0; i < MOISTURE_SENSOR_COUNT; i++)
                         {
-                          o_pld["moisture" + String(i)] = readMoistureSensor(i);
+                          moisture_arr.add(readMoistureSensor(i));
                         }
                         for (uint8_t i = 0; i < SOLENOID_VALVE_COUNT; i++)
                         {
-                          o_pld["valve" + String(i)] = valveStatus(i);
+                          valve_arr.add(valveStatus(i));
                         }
                         sendFeedbackToCloud(o_pld);
                         return;
