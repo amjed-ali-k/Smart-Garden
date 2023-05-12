@@ -37,7 +37,6 @@ def mqtt_start():
     mqttClient.subscribe("/+/sensor-data")
     mqttClient.message_callback_add("/+/feedback", on_message_feedback)
     mqttClient.message_callback_add("/+/sensor-data", on_message_sensor_data)
-
     mqttClient.loop_start()
 
 

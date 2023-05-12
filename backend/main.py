@@ -3,7 +3,6 @@ from typing import List
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-
 from pydantic import BaseModel
 from db.db import db, mongoClient
 
@@ -16,7 +15,6 @@ from models.device import (
     HardwareStatusIn,
     PublicDeviceConfig,
 )
-
 
 app = FastAPI()
 
@@ -32,7 +30,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-tz = pytz.timezone("Asia/Kolkata")
 
 
 @app.on_event("startup")
@@ -45,6 +42,9 @@ def connect_mqtt():
 def disconnect_mqtt():
     mqtt_stop()
     mongoClient.close()
+
+
+tz = pytz.timezone("Asia/Kolkata")
 
 
 # favicon
