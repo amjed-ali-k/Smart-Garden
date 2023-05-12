@@ -538,14 +538,15 @@ void loop()
   if (millis() - lastupdate > 5 * 60E3)
   {
     lastupdate = millis();
-    StaticJsonDocument<200> o_pld;
-    JsonArray arr = o_pld["moisture"].to<JsonArray>();
+    StaticJsonDocument<200> dataPayload;
+    dataPayload["client_name"] = config["mqtt_client_name"];
+    JsonArray arr = dataPayload["moisture"].to<JsonArray>();
     for (uint8_t i = 0; i < MOISTURE_SENSOR_COUNT; i++)
       arr.add(readMoistureSensor(i));
-    JsonArray arr2 = o_pld["valve"].to<JsonArray>();
+    JsonArray arr2 = dataPayload["valve"].to<JsonArray>();
     for (uint8_t i = 0; i < SOLENOID_VALVE_COUNT; i++)
       arr2.add(valveStatus(i));
-    o_pld["client_name"] = config["mqtt_client_name"];
-    sendFeedbackToCloud(o_pld, "/sensor-data");
+    sendFeedbackToCloud(dataPayload, "/sensor-data");
+    dataPayload.clear();
   }
 }

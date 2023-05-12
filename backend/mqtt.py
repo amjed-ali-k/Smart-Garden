@@ -146,7 +146,7 @@ def on_message_sensor_data(topic, client: mqtt.Client, message: mqtt.MQTTMessage
 def publish(topic: str, payload: dict):
     db.device_logs.insert_one(
         {
-            **payload,
+            "payload": payload,
             "topic": topic,
             "type": "publish_from_cloud",
         }
