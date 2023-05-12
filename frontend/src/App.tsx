@@ -15,10 +15,10 @@ type StatusRes = {
 function App() {
   const { data: status, isLoading } = useSWR<StatusRes>(
     `https://service-smartgarden-api.s2.tebs.co.in/sensor/${deviceName}/status`,
-    fetcher
-    // {
-    //   refreshInterval: 20000,
-    // }
+    fetcher,
+    {
+      refreshInterval: 5000,
+    }
   );
 
   const [valves, setValves] = useState<boolean[]>([]);
