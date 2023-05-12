@@ -152,3 +152,4 @@ def publish(topic: str, payload: dict):
         }
     )
     mqttClient.publish(topic, payload=json.dumps(payload))
+    print(f"Published to {topic}")

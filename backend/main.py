@@ -6,7 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import BaseModel
 from db.db import db, mongoClient
+
 from mqtt import mqtt_start, mqtt_stop, publish
+
 from models.device import (
     DBConfigsIn,
     DBSensorDataIn,

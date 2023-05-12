@@ -345,17 +345,18 @@ void onConnectionEstablished()
                         o_pld["command"] = CMD_STATUS;
                         o_pld["uptime"] = ESP.getCycleCount() / (ESP.getCpuFreqMHz() * 1E6);
                         
-                        JsonArray valve_arr = o_pld["valve"];
-                        JsonArray moisture_arr = o_pld["moisture"];
+                        JsonArray moisture_arr = o_pld["moisture"].to<JsonArray>();
 
                         for (uint8_t i = 0; i < MOISTURE_SENSOR_COUNT; i++)
                         {
                           moisture_arr.add(readMoistureSensor(i));
                         }
+                        JsonArray valve_arr = o_pld["valve"].to<JsonArray>();
                         for (uint8_t i = 0; i < SOLENOID_VALVE_COUNT; i++)
                         {
                           valve_arr.add(valveStatus(i));
                         }
+
                         sendFeedbackToCloud(o_pld);
                         return;
                      }
@@ -476,7 +477,7 @@ void loop()
     int today = timeClient.getDay();
 
     // Check if it is time to water
-    JsonArray wateringTimes = config["watering_times"];
+    JsonArray wateringTimes = config["watering_times"].to<JsonArray>();
 
     if (!isWateringTime)
       for (uint8_t i = 0; i < wateringTimes.size(); i++)
@@ -539,11 +540,12 @@ void loop()
   }
 
   // sent all sensor reading to server once in 5 minutes
-  if (millis() - lastupdate > 5 * 60E3)
+  if (millis() - lastupdate > 1 * 60E3)
   {
     lastupdate = millis();
     StaticJsonDocument<200> dataPayload;
     dataPayload["client_name"] = config["mqtt_client_name"];
+    PT("Client Name: " + (config["mqtt_client_name"].as<String>()));
     JsonArray arr = dataPayload["moisture"].to<JsonArray>();
     for (uint8_t i = 0; i < MOISTURE_SENSOR_COUNT; i++)
       arr.add(readMoistureSensor(i));
