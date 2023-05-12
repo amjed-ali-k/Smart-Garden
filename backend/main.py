@@ -85,7 +85,7 @@ async def get_sensor_status(client_name: str) -> HardwareStatusIn:
         res.updated_at, tz
     )
     print("Requested status - Time diffrence is : ", diff.seconds)
-    if diff.seconds > 30:
+    if diff.seconds > 10:
         publish(f"/{client_name}/commands", {"command": "get_status"})
     # publish command
     return res
