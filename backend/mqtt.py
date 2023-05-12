@@ -1,4 +1,4 @@
-import datetime
+import datetime, pytz
 import json
 import os
 import random
@@ -18,6 +18,8 @@ from models.device import (
 )
 
 mqttClient = mqtt.Client(f"Cloud-{random.randint(0, 1000)}")
+
+tz = pytz.timezone("Asia/Kolkata")
 
 
 def on_connect(client, userdata, flags, rc):
@@ -65,7 +67,7 @@ def on_message_feedback(topic, client: mqtt.Client, message: mqtt.MQTTMessage):
             **decoded,
             "mqtt_client_name": client_name,
             "type": "feedback",
-            "created_at": datetime.datetime.now().timestamp(),
+            "created_at": datetime.datetime.now(tz).timestamp(),
         }
     )
 
@@ -77,7 +79,7 @@ def on_message_feedback(topic, client: mqtt.Client, message: mqtt.MQTTMessage):
                 "$set": HardwareStatusIn(
                     **data.dict(),
                     mqtt_client_name=client_name,
-                    updated_at=datetime.datetime.now().timestamp(),
+                    updated_at=datetime.datetime.now(tz).timestamp(),
                 ).dict()
             },
         )
@@ -117,7 +119,7 @@ def on_message_feedback(topic, client: mqtt.Client, message: mqtt.MQTTMessage):
                 {"mqtt_client_name": data.mqtt_client_name},
                 {
                     "$set": DBConfigsIn(
-                        **data.dict(), updated_at=datetime.datetime.now().timestamp()
+                        **data.dict(), updated_at=datetime.datetime.now(tz).timestamp()
                     ).dict()
                 },
             ).modified_count
@@ -125,7 +127,7 @@ def on_message_feedback(topic, client: mqtt.Client, message: mqtt.MQTTMessage):
         ):
             db.configs.insert_one(
                 DBConfigsIn(
-                    **data.dict(), updated_at=datetime.datetime.now().timestamp()
+                    **data.dict(), updated_at=datetime.datetime.now(tz).timestamp()
                 ).dict()
             )
 
@@ -136,7 +138,7 @@ def on_message_sensor_data(topic, client: mqtt.Client, message: mqtt.MQTTMessage
     db.sensor_history.insert_one(
         DBSensorDataIn(
             **PayloadSensorData.parse_raw(message.payload).dict(),
-            created_at=datetime.datetime.now().timestamp(),
+            created_at=datetime.datetime.now(tz).timestamp(),
         ).dict()
     )
 

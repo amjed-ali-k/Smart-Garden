@@ -1,4 +1,4 @@
-import datetime
+import datetime, pytz
 from typing import List
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
@@ -30,6 +30,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+tz = pytz.timezone("Asia/Kolkata")
 
 
 @app.on_event("startup")
@@ -80,7 +81,7 @@ async def get_sensor_status(client_name: str) -> HardwareStatusIn:
     res = HardwareStatusIn(**data)
 
     if (
-        datetime.datetime.now() - datetime.datetime.fromtimestamp(res.updated_at)
+        datetime.datetime.now(tz) - datetime.datetime.fromtimestamp(res.updated_at)
     ).seconds > 30:
         publish(f"{client_name}/commands", {"command": "get_status"})
     # publish command
@@ -131,7 +132,7 @@ async def set_config(client_name: str, config: DeviceConfig):
         {
             "$set": DBConfigsIn(
                 **config.dict(),
-                updated_at=datetime.datetime.now().timestamp(),
+                updated_at=datetime.datetime.now(tz).timestamp(),
             ).dict()
         },
     )

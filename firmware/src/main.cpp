@@ -326,8 +326,8 @@ void onConnectionEstablished()
                        return;
                      }
                      else if (command == CMD_GET_CONFIG){
-                       client.publish(getTopicName("/feedback"),
                                       config[command] = CMD_CONFIG;
+                       client.publish(getTopicName("/feedback"),
                                       convertToJsonString(config));
                        return;
                      }
@@ -541,10 +541,10 @@ void loop()
     StaticJsonDocument<200> o_pld;
     JsonArray arr = o_pld["moisture"].to<JsonArray>();
     for (uint8_t i = 0; i < MOISTURE_SENSOR_COUNT; i++)
-      arr.add(readMoistureSensor(i);
-    JsonArray arr = o_pld["valve"].to<JsonArray>();
-    for(uint8_t i=0;i<SOLENOID_VALVE_COUNT;i++)
-      arr.add(valveStatus(i);
+      arr.add(readMoistureSensor(i));
+    JsonArray arr2 = o_pld["valve"].to<JsonArray>();
+    for (uint8_t i = 0; i < SOLENOID_VALVE_COUNT; i++)
+      arr2.add(valveStatus(i));
     o_pld["client_name"] = config["mqtt_client_name"];
     sendFeedbackToCloud(o_pld, "/sensor-data");
   }
