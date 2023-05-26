@@ -56,14 +56,17 @@ command_type = {
 
 def on_message_feedback(topic, client: mqtt.Client, message: mqtt.MQTTMessage):
     client_name = message.topic.split("/")[1]
+
     decoded: Dict = json.loads(message.payload)
     if not decoded.get("command"):
         return
     command = decoded["command"]
+    print("Feedback received for command: ", command)
+    print("Payload: ", decoded)
 
     db.device_logs.insert_one(
         {
-            **decoded,
+            "payload": decoded,
             "mqtt_client_name": client_name,
             "type": "feedback",
             "created_at": datetime.datetime.now(tz).timestamp(),
@@ -148,6 +151,7 @@ def publish(topic: str, payload: dict):
             "payload": payload,
             "topic": topic,
             "type": "publish_from_cloud",
+            "created_at": datetime.datetime.now(tz).timestamp(),
         }
     )
     mqttClient.publish(topic, payload=json.dumps(payload))

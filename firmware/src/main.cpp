@@ -9,14 +9,14 @@
 
 // Default Values
 
-#define WIFI_SSID "Flamingo"
-#define WIFI_PASSWORD "123456789"
+#define WIFI_SSID "EL Dept II"
+#define WIFI_PASSWORD "rebuildkerala"
 #define MQTT_SERVER "broker.hivemq.com"
 #define MQTT_USERNAME ""
 #define MQTT_PASSWORD ""
 #define MQTT_CLIENT_NAME "SmartGarden-82FA"
 #define MQTT_PORT 1883
-#define DEFAULT_WATERING_DURATION 5 * 60
+#define DEFAULT_WATERING_DURATION 1 * 30
 #define DEFAULT_WATERING_INTERVAL 30
 
 // Pin Definitions
@@ -188,6 +188,7 @@ void loadDefaultConfig()
   config["watering_enabled"] = true;
   JsonArray arr = config["watering_times"].to<JsonArray>();
   arr.add(7 * 60);
+  arr.add(13 * 60);
   arr.add(17 * 60);
   config["ssid"] = WIFI_SSID;
   config["password"] = WIFI_PASSWORD;
@@ -539,7 +540,7 @@ void loop()
     }
   }
 
-  // sent all sensor reading to server once in 5 minutes
+  // sent all sensor reading to server once in 1 minutes
   if (millis() - lastupdate > 1 * 60E3)
   {
     lastupdate = millis();
